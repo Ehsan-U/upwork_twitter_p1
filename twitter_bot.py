@@ -1,3 +1,4 @@
+import argparse
 import scrapy 
 from scrapy.crawler import CrawlerProcess
 from scrapy import signals
@@ -16,12 +17,12 @@ class Twitter(scrapy.Spider):
             yield scrapy.Request(url='https://twitter.com', callback=self.parse, cb_kwargs=keyword)
 
 
-    def parse(self, response, keyword, iDOutRequest,  min_followers, maxResults):
+    def parse(self, response, keyword, iDOutRequest,  minimumNumberofSubscribers, maxResults):
         tweets = self.api.search_tweets(keyword, count=maxResults, tweet_mode='extended', result_type='recent', lang='en')
         for tweet in tweets:
             if 'RT @' not in tweet.full_text:
                 followers = tweet.user.followers_count
-                if followers < min_followers:
+                if followers < minimumNumberofSubscribers:
                     continue
                 channelName = tweet.user.screen_name    
                 recent_tweets = self.get_user_tweets(self.api, channelName)
@@ -63,9 +64,14 @@ class Twitter(scrapy.Spider):
 
 
 
+
+
 crawler = CrawlerProcess(settings={
+    "LOG_LEVEL": "DEBUG",
+    "DOWNLOAD_DELAY": 10,
+    "CONCURRENT_REQUESTS": 4,
     "HTTPCACHE_ENABLED": True,
     "USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36",
 })
-crawler.crawl(Twitter, keywords=[{"keyword": "realpython", "iDOutRequest":1, "min_followers": 100, "maxResults":100}])
+crawler.crawl(Twitter, keywords=[{"keyword": 'scrapy', "iDOutRequest":1, "minimumNumberofSubscribers": 100, "maxResults":100}])
 crawler.start()
